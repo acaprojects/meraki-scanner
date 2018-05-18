@@ -19,11 +19,14 @@ end
 
 class Observation
   JSON.mapping(
+    # This is never actually directly in this model
+    floors: {type: Array(String), nilable: true},
+
     clientMac: String,
-    ipv4: {type: String, nilable: true},
-    ipv6: {type: String, nilable: true},
     seenTime: String,
     seenEpoch: Int64,
+    ipv4: {type: String, nilable: true},
+    ipv6: {type: String, nilable: true},
     ssid: {type: String, nilable: true},
     rssi: Int64,
     manufacturer: {type: String, nilable: true},
