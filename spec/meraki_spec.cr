@@ -6,7 +6,7 @@ describe Meraki do
   # ==============
   with_server do
     it "should respond with validator" do
-      result = curl("GET", "/events")
+      result = curl("GET", "/meraki")
       result.body.includes?("example").should eq(true)
     end
 
@@ -42,17 +42,17 @@ describe Meraki do
         }
       }.to_json
 
-      result = curl("POST", "/events", {"Content-Type" => "application/json"}, data)
+      result = curl("POST", "/meraki", {"Content-Type" => "application/json"}, data)
       result.status_code.should eq(200)
     end
 
     it "should be able to look up devices" do
       raise "nothing to lookup" unless Meraki::DEVICE_LOOKUP.size == 1
 
-      result = curl("GET", "/events/aabbCCddEEff")
+      result = curl("GET", "/meraki/aabbCCddEEff")
       result.status_code.should eq(403)
 
-      result = curl("GET", "/events/aabbCCddEEff", {"Authorization" => "Bearer secret"})
+      result = curl("GET", "/meraki/aabbCCddEEff", {"Authorization" => "Bearer secret"})
       result.status_code.should eq(200)
     end
   end

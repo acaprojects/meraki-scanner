@@ -1,5 +1,5 @@
 class Meraki < Application
-  base "/events"
+  base "/meraki"
 
   private VALIDATOR = ENV["MERAKI_VALIDATOR"]? || "example"
   private SECRET = ENV["MERAKI_SECRET"]? || "secret"
