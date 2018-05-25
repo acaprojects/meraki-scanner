@@ -57,7 +57,7 @@ class Meraki < Application
       head :forbidden
     end
 
-    mac = params["id"].gsub(/[^0-9A-Fa-f]/, "").downcase
+    mac = params["id"].gsub(/[^0-9A-Fa-f\.\:]/, "").downcase
     device = DEVICE_LOOKUP[mac]?
 
     if device
@@ -68,14 +68,35 @@ class Meraki < Application
   end
 
   protected def map_data(floors, device)
+    return if device.seenEpoch == 0
+
+    # MAC Address Lookup
     device.floors = floors
     mac = device.clientMac.gsub(/[^0-9A-Fa-f]/, "").downcase
 
-    return if device.seenEpoch == 0
-
     existing = DEVICE_LOOKUP[mac]?
-    return if existing && existing.seenEpoch > device.seenEpoch
+    if !(existing && existing.seenEpoch > device.seenEpoch)
+      DEVICE_LOOKUP[mac] = device
+    end
 
-    DEVICE_LOOKUP[mac] = device
+    # IPv4 Lookup
+    ip = device.ipv4
+    if ip
+      ip = ip.gsub(/[^0-9\.]/, "")
+      existing = DEVICE_LOOKUP[ip]?
+      if !(existing && existing.seenEpoch > device.seenEpoch)
+        DEVICE_LOOKUP[ip] = device
+      end
+    end
+
+    # IPv6 Lookup
+    ip = device.ipv6
+    if ip
+      ip = ip.gsub(/[^0-9A-Fa-f\.\:]/, "").downcase
+      existing = DEVICE_LOOKUP[ip]?
+      if !(existing && existing.seenEpoch > device.seenEpoch)
+        DEVICE_LOOKUP[ip] = device
+      end
+    end
   end
 end

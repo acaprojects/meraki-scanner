@@ -47,12 +47,18 @@ describe Meraki do
     end
 
     it "should be able to look up devices" do
-      raise "nothing to lookup" unless Meraki::DEVICE_LOOKUP.size == 1
+      raise "device lookup is missing entries" unless Meraki::DEVICE_LOOKUP.size == 3
 
       result = curl("GET", "/meraki/aabbCCddEEff")
       result.status_code.should eq(403)
 
       result = curl("GET", "/meraki/aabbCCddEEff", {"Authorization" => "Bearer secret"})
+      result.status_code.should eq(200)
+
+      result = curl("GET", "/meraki/123.45.67.89", {"Authorization" => "Bearer secret"})
+      result.status_code.should eq(200)
+
+      result = curl("GET", "/meraki/ff11:2233:4455:6677:8899:0:aabb:ccdd", {"Authorization" => "Bearer secret"})
       result.status_code.should eq(200)
     end
   end
