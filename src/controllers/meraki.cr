@@ -3,8 +3,6 @@ class Meraki < Application
 
   private VALIDATOR = ENV["MERAKI_VALIDATOR"]? || "example"
   private SECRET = ENV["MERAKI_SECRET"]? || "secret"
-  private MAX_AGE = (ENV["MERAKI_MAX_AGE"]? || "60").to_i
-  private MIN_AGE = (MAX_AGE / 2).to_i
 
   def index
     render text: VALIDATOR
@@ -99,16 +97,65 @@ class Meraki < Application
     mac = device.clientMac.gsub(/[^0-9A-Fa-f]/, "").downcase
     existing = DEVICE_LOOKUP[mac]?
 
-    if existing
-      max_age = existing.seenEpoch + MAX_AGE
-      min_age = existing.seenEpoch - MIN_AGE
-
-      # Only compare fresh data and then keep the most confident readings
-      return if device.seenEpoch < min_age
-      if device.seenEpoch <= max_age
-        return if device.location.not_nil!.unc > existing.location.not_nil!.unc
-      end
-    end
+    return if existing && !should_update?(existing, device)
     DEVICE_LOOKUP[mac] = device
+  end
+
+  protected def should_update?(existing, update)
+    # If the existing value really old?
+    cutoff_age = existing.seenEpoch + MAX_TIME_DIFF
+    return true if cutoff_age < update.seenEpoch
+
+    max_age = existing.seenEpoch + MAX_AGE
+    min_age = existing.seenEpoch - MIN_AGE
+
+    # Is the new value too old
+    return false if update.seenEpoch < min_age
+
+    # Does the new value have acceptable confidence
+    new_uncertainty = update.location.not_nil!.unc
+    return true if new_uncertainty <= ACCEPTABLE_CONFIDENCE
+
+    # Is the new value less uncertain than the last value
+    old_uncertainty = existing.location.not_nil!.unc
+    return true if new_uncertainty <= old_uncertainty
+
+    # Are we still happy with the current value given the time period
+    return false if update.seenEpoch < max_age
+
+    # Has the floor changed?
+    return true if existing.floors.not_nil![0]? != update.floors.not_nil![0]?
+
+    # % confidence in the location accuracy
+    confidence_factor = 1.0 - (CONFIDENCE_MULTIPLIER * (new_uncertainty - ACCEPTABLE_CONFIDENCE))
+    confidence_factor = 0.0 if confidence_factor < 0
+
+    # % difference in time from the last confident location
+    time_diff = update.seenEpoch - existing.seenEpoch
+    time_factor = TIME_MULTIPLIER * (time_diff - MAX_AGE)
+    time_factor = 0.0 if time_factor < 0
+
+    # Average of the confidence factors
+    average_multiplier = (confidence_factor + time_factor) / 2.0
+
+    # Factor the difference between the x and y values
+    new_location = update.location.not_nil!
+    old_location = existing.location.not_nil!
+
+    new_x = new_location.x[0] # 10
+    new_y = new_location.y[0]
+    old_x = old_location.x[0] # 5
+    old_y = old_location.y[0]
+
+    # 7.5 =   5   + ((  10  -  5   ) * 0.5)
+    new_x = old_x + ((new_x - old_x) * average_multiplier)
+    new_y = old_y + ((new_y - old_y) * average_multiplier)
+    new_uncertainty = new_uncertainty * average_multiplier
+
+    new_location.x[0] = new_x
+    new_location.y[0] = new_y
+    new_location.unc = new_uncertainty
+
+    true
   end
 end
