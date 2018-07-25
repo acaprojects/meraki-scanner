@@ -150,7 +150,7 @@ class Meraki < Application
     # 7.5 =   5   + ((  10  -  5   ) * 0.5)
     new_x = old_x + ((new_x - old_x) * average_multiplier)
     new_y = old_y + ((new_y - old_y) * average_multiplier)
-    new_uncertainty = new_uncertainty * average_multiplier
+    new_uncertainty = old_uncertainty + ((new_uncertainty - old_uncertainty) * average_multiplier)
 
     new_location.x[0] = new_x
     new_location.y[0] = new_y
