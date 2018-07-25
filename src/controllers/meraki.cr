@@ -3,6 +3,8 @@ class Meraki < Application
 
   private VALIDATOR = ENV["MERAKI_VALIDATOR"]? || "example"
   private SECRET = ENV["MERAKI_SECRET"]? || "secret"
+  private MAX_AGE = (ENV["MERAKI_MAX_AGE"]? || "60").to_i
+  private MIN_AGE = (MAX_AGE / 2).to_i
 
   def index
     render text: VALIDATOR
@@ -98,8 +100,8 @@ class Meraki < Application
     existing = DEVICE_LOOKUP[mac]?
 
     if existing
-      max_age = existing.seenEpoch + 7
-      min_age = existing.seenEpoch - 7
+      max_age = existing.seenEpoch + MAX_AGE
+      min_age = existing.seenEpoch - MIN_AGE
 
       # Only compare fresh data and then keep the most confident readings
       return if device.seenEpoch < min_age
