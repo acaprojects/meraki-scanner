@@ -67,17 +67,11 @@ class Meraki < Application
     end
   end
 
+  # IP address data is stored as most recently seen
+  # Mac address data is most accurate recent location
   protected def map_data(floors, device)
     return if device.seenEpoch == 0
-
-    # MAC Address Lookup
     device.floors = floors
-    mac = device.clientMac.gsub(/[^0-9A-Fa-f]/, "").downcase
-
-    existing = DEVICE_LOOKUP[mac]?
-    if !(existing && existing.seenEpoch > device.seenEpoch)
-      DEVICE_LOOKUP[mac] = device
-    end
 
     # IPv4 Lookup
     ip = device.ipv4
@@ -98,5 +92,21 @@ class Meraki < Application
         DEVICE_LOOKUP[ip] = device
       end
     end
+
+    # MAC Address Lookup (used for location tracking)
+    mac = device.clientMac.gsub(/[^0-9A-Fa-f]/, "").downcase
+    existing = DEVICE_LOOKUP[mac]?
+
+    if existing
+      max_age = existing.seenEpoch + 7
+      min_age = existing.seenEpoch - 7
+
+      # Only compare fresh data and then keep the most confident readings
+      return if device.seenEpoch < min_age
+      if device.seenEpoch <= max_age
+        return if device.location.not_nil!.unc > existing.location.not_nil!.unc
+      end
+    end
+    DEVICE_LOOKUP[mac] = device
   end
 end
