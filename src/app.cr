@@ -32,15 +32,21 @@ end
 puts "Launching #{APP_NAME} v#{VERSION}"
 server = ActionController::Server.new(port, host)
 
-# Detect ctr-c to shutdown gracefully
-Signal::INT.trap do
+terminate = Proc(Signal, Nil).new do |signal|
   puts " > terminating gracefully"
-  server.close
+  spawn { server.close }
+  signal.ignore
 end
 
+# Detect ctr-c to shutdown gracefully
+Signal::INT.trap &terminate
+# Docker containers use the term signal
+Signal::TERM.trap &terminate
+
 # Start the server
-puts "Listening on tcp://#{host}:#{port}"
-server.run
+server.run do
+  puts "Listening on #{server.print_addresses}"
+end
 
 # Shutdown message
 puts "#{APP_NAME} leaps through the veldt\n"
