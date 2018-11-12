@@ -22,4 +22,14 @@ abstract class Application < ActionController::Base
   # How much confidence do we factor into the current position (5m == 1 max confidence, 30m == 0 zero confidence)
   CONFIDENCE_MULTIPLIER = 1.0 / (MAX_UNCERTAINTY - ACCEPTABLE_CONFIDENCE)
 
+  struct Status
+    property error_count, updated_at, version, version_mismatch, secret_mismatch, bluetooth
+    @version : String = "2.0"
+    @bluetooth : Int32 = 0
+    @updated_at : Int64 = 0
+    @error_count : Int32 = 0
+    @secret_mismatch : Int32 = 0
+    @version_mismatch : Int32 = 0
+  end
+
 end

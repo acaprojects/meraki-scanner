@@ -3,9 +3,21 @@ class Meraki < Application
 
   private VALIDATOR = ENV["MERAKI_VALIDATOR"]? || "example"
   private SECRET = ENV["MERAKI_SECRET"]? || "secret"
+  private STATUS = Status.new
 
   def index
     render text: VALIDATOR
+  end
+
+  get "/status", :status do
+    render json: {
+        version: STATUS.version,
+        bluetooth: STATUS.bluetooth,
+        updated_at: STATUS.updated_at,
+        error_count: STATUS.error_count,
+        secret_mismatch: STATUS.secret_mismatch,
+        version_mismatch: STATUS.version_mismatch
+    }
   end
 
   def create
@@ -21,20 +33,26 @@ class Meraki < Application
       seen = DevicesSeen.from_json(body)
 
       if seen.secret != SECRET
+        STATUS.secret_mismatch += 1
         logger.warn "got post with bad secret: #{seen.secret}"
         head :forbidden
       end
 
       logger.info "version is #{seen.version}"
       if seen.version != "2.0"
+        STATUS.version_mismatch += 1
+        STATUS.version = seen.version
         logger.warn "got post with unexpected version: #{seen.version}"
         head :not_acceptable
       end
 
       if seen.type != "DevicesSeen"
+        STATUS.bluetooth += 1
         logger.warn "got post for event that we're not interested in: #{seen.type}"
         head :not_acceptable
       end
+
+      STATUS.updated_at = Time.now.to_unix
 
       seen.data.observations.each do |device|
         map_data(seen.data.apFloors, device) unless device.location.nil?
@@ -42,6 +60,7 @@ class Meraki < Application
 
       head :ok
     rescue e
+      STATUS.error_count += 1
       logger.error "Error parsing\n#{body}\n#{e.message}\n#{e.backtrace.join("\n")}"
       raise e
     end
