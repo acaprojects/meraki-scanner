@@ -2,15 +2,20 @@ require "option_parser"
 require "./config"
 
 # Server defaults
-port = 3000
-host = "127.0.0.1"
+port = (ENV["SG_SERVER_PORT"]? || 3000).to_i
+host = ENV["SG_SERVER_HOST"]? || "127.0.0.1"
+process_count = (ENV["SG_PROCESS_COUNT"]? || 1).to_i
 
 # Command line options
-OptionParser.parse! do |parser|
+OptionParser.parse(ARGV.dup) do |parser|
   parser.banner = "Usage: #{PROGRAM_NAME} [arguments]"
 
   parser.on("-b HOST", "--bind=HOST", "Specifies the server host") { |h| host = h }
   parser.on("-p PORT", "--port=PORT", "Specifies the server port") { |p| port = p.to_i }
+
+  parser.on("-w COUNT", "--workers=COUNT", "Specifies the number of processes to handle requests") do |w|
+    process_count = w.to_i
+  end
 
   parser.on("-r", "--routes", "List the application routes") do
     ActionController::Server.print_routes
@@ -31,6 +36,9 @@ end
 # Load the routes
 puts "Launching #{APP_NAME} v#{VERSION}"
 server = ActionController::Server.new(port, host)
+
+# Start clustering using processes
+server.cluster(process_count, "-w", "--workers") if process_count != 1
 
 terminate = Proc(Signal, Nil).new do |signal|
   puts " > terminating gracefully"
