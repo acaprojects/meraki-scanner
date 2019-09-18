@@ -6,6 +6,5 @@ See: https://documentation.meraki.com/MR/Monitoring_and_Reporting/Location_Analy
 ## Environment Variables
 
 * `MERAKI_VALIDATOR` for meraki to validate the service is for the organisation specified
-* `MERAKI_SECRET` to confirm that the requests are coming from a meraki server
-
-`MERAKI_SECRET` is also used as a bearer token for application requests to the server.
+* `MERAKI_SECRET` to confirm that the requests are coming from a meraki server. This is also used as a bearer token for application requests to the server.
+* `MERAKI_VERSION` is the expected protocol version. Default to `"2.0"`.

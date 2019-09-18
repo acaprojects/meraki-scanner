@@ -3,6 +3,7 @@ class Meraki < Application
 
   private VALIDATOR = ENV["MERAKI_VALIDATOR"]? || "example"
   private SECRET    = ENV["MERAKI_SECRET"]? || "secret"
+  private VERSION   = ENV["MERAKI_VERSION"]? || "2.0"
   private STATUS    = Status.new
 
   def index
@@ -39,7 +40,7 @@ class Meraki < Application
       end
 
       logger.info "version is #{seen.version}"
-      if seen.version != "2.0"
+      if seen.version != VERSION
         STATUS.version_mismatch += 1
         STATUS.version = seen.version
         logger.warn "got post with unexpected version: #{seen.version}"
