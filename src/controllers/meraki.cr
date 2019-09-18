@@ -2,8 +2,8 @@ class Meraki < Application
   base "/meraki"
 
   private VALIDATOR = ENV["MERAKI_VALIDATOR"]? || "example"
-  private SECRET = ENV["MERAKI_SECRET"]? || "secret"
-  private STATUS = Status.new
+  private SECRET    = ENV["MERAKI_SECRET"]? || "secret"
+  private STATUS    = Status.new
 
   def index
     render text: VALIDATOR
@@ -11,12 +11,12 @@ class Meraki < Application
 
   get "/status", :status do
     render json: {
-        version: STATUS.version,
-        bluetooth: STATUS.bluetooth,
-        updated_at: STATUS.updated_at,
-        error_count: STATUS.error_count,
-        secret_mismatch: STATUS.secret_mismatch,
-        version_mismatch: STATUS.version_mismatch
+      version:          STATUS.version,
+      bluetooth:        STATUS.bluetooth,
+      updated_at:       STATUS.updated_at,
+      error_count:      STATUS.error_count,
+      secret_mismatch:  STATUS.secret_mismatch,
+      version_mismatch: STATUS.version_mismatch,
     }
   end
 
@@ -66,9 +66,7 @@ class Meraki < Application
     end
   end
 
-
   DEVICE_LOOKUP = {} of String => Observation
-
 
   def show
     security = request.headers["Authorization"]?

@@ -1,6 +1,4 @@
-
 abstract class Application < ActionController::Base
-
   # Max age, after which we accept positions that are less confident
   MAX_AGE = (ENV["MERAKI_MAX_AGE"]? || "60").to_i
 
@@ -31,5 +29,4 @@ abstract class Application < ActionController::Base
     @secret_mismatch : Int32 = 0
     @version_mismatch : Int32 = 0
   end
-
 end
