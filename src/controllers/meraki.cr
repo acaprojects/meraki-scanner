@@ -123,6 +123,9 @@ class Meraki < Application
   end
 
   protected def should_update?(existing, update)
+    # Check if the new value is somewhere in the future
+    return false if Time.unix(update.seenEpoch) > 10.minutes.from_now
+
     # If the existing value really old?
     cutoff_age = existing.seenEpoch + MAX_TIME_DIFF
     return true if cutoff_age < update.seenEpoch
