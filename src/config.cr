@@ -2,11 +2,18 @@
 require "action-controller"
 require "active-model"
 
-# Allows request IDs to be configured for logging
-# You can extend this with additional properties
-class HTTP::Request
-  property id : String?
-end
+# Logging configuration
+ActionController::Logger.add_tag request_id
+ActionController::Logger.add_tag client_ip
+
+# Default log levels
+running_in_production = ENV["SG_ENV"]? == "production"
+logger = ActionController::Base.settings.logger
+logger.level = running_in_production ? Logger::INFO : Logger::DEBUG
+
+# Filter out sensitive params that shouldn't be logged
+filter_params = [] of String
+keeps_headers = ["X-Request-ID"]
 
 # Application code
 require "./controllers/application"
@@ -16,19 +23,10 @@ require "./models/*"
 # Server required after application controllers
 require "action-controller/server"
 
-STDOUT.sync = true
-
 # Add handlers that should run before your application
 ActionController::Server.before(
-  HTTP::ErrorHandler.new(ENV["SG_ENV"]? != "production"),
-  ActionController::LogHandler.new(STDOUT) { |context|
-    # Allows for custom tags to be included when logging
-    # For example you might want to include a user id here.
-    {
-      # `context.request.id` is set in `controllers/application`
-      request_id: context.request.id,
-    }.map { |key, value| " #{key}=#{value}" }.join("")
-  },
+  ActionController::ErrorHandler.new(!running_in_production, keeps_headers),
+  ActionController::LogHandler.new(filter_params),
   HTTP::CompressHandler.new
 )
 
@@ -42,4 +40,4 @@ ActionController::Session.configure do |settings|
 end
 
 APP_NAME = "ACA Meraki"
-VERSION  = "1.0.0"
+VERSION  = "1.1.0"

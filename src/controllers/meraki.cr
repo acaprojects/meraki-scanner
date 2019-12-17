@@ -53,7 +53,7 @@ class Meraki < Application
         head :not_acceptable
       end
 
-      STATUS.updated_at = Time.now.to_unix
+      STATUS.updated_at = Time.utc.to_unix
 
       seen.data.observations.each do |device|
         map_data(seen.data.apFloors, device) unless device.location.nil?
@@ -89,6 +89,9 @@ class Meraki < Application
   # Mac address data is most accurate recent location
   protected def map_data(floors, device)
     return if device.seenEpoch == 0
+
+    # Detect NaN where a devices location could not be calculated
+    return if device.location.nil? || device.location.not_nil!.lat.is_a?(String)
     device.floors = floors
 
     # IPv4 Lookup
@@ -131,11 +134,11 @@ class Meraki < Application
     return false if update.seenEpoch < min_age
 
     # Does the new value have acceptable confidence
-    new_uncertainty = update.location.not_nil!.unc
+    new_uncertainty = update.location.not_nil!.unc.as(Float64)
     return true if new_uncertainty <= ACCEPTABLE_CONFIDENCE
 
     # Is the new value less uncertain than the last value
-    old_uncertainty = existing.location.not_nil!.unc
+    old_uncertainty = existing.location.not_nil!.unc.as(Float64)
     return true if new_uncertainty <= old_uncertainty
 
     # Are we still happy with the current value given the time period
@@ -160,10 +163,10 @@ class Meraki < Application
     new_location = update.location.not_nil!
     old_location = existing.location.not_nil!
 
-    new_x = new_location.x[0] # 10
-    new_y = new_location.y[0]
-    old_x = old_location.x[0] # 5
-    old_y = old_location.y[0]
+    new_x = new_location.x[0].to_f # 10
+    new_y = new_location.y[0].to_f
+    old_x = old_location.x[0].to_f # 5
+    old_y = old_location.y[0].to_f
 
     # 7.5 =   5   + ((  10  -  5   ) * 0.5)
     new_x = old_x + ((new_x - old_x) * average_multiplier)

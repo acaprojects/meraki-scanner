@@ -8,11 +8,11 @@ end
 
 class Location
   JSON.mapping(
-    lat: Float64,      # latitude in degrees N of the equator
-    lng: Float64,      # longitude in degrees E of the prime meridian
-    unc: Float64,      # Uncertainty in meters
-    x: Array(Float64), # x offsets (in meters) from lower-left corner
-    y: Array(Float64)  # y offsets (in meteres) from lower-left corner
+    lat: Float64 | String,      # latitude in degrees N of the equator
+    lng: Float64 | String,      # longitude in degrees E of the prime meridian
+    unc: Float64 | String,      # Uncertainty in meters
+    x: Array(Float64 | String), # x offsets (in meters) from lower-left corner
+    y: Array(Float64 | String)  # y offsets (in meteres) from lower-left corner
   )
 end
 

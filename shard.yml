@@ -4,10 +4,10 @@ version: 1.0.2
 dependencies:
   action-controller:
     github: spider-gazelle/action-controller
-    version: ~> 1.6
+    version: ~> 2.0
   active-model:
     github: spider-gazelle/active-model
-    version: 1.6.0
+    version: ~> 1.6
 
   # https://github.com/jeromegn/kilt
   # Generic template interface for Crystal
