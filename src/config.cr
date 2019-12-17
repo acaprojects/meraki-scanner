@@ -15,6 +15,8 @@ logger.level = running_in_production ? Logger::INFO : Logger::DEBUG
 filter_params = [] of String
 keeps_headers = ["X-Request-ID"]
 
+STDOUT.sync = true
+
 # Application code
 require "./controllers/application"
 require "./controllers/*"
